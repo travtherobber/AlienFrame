@@ -1,0 +1,7 @@
+# ghostlight — faint blue glow in darkness
+FG=252
+BG=0
+BORDER=239
+ACCENT=111
+TEXT=255
+HINT=189
