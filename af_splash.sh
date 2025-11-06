@@ -4,6 +4,13 @@
 #  high-fidelity startup banner — centered, animated, 100 % af_io-native
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=splash
+#@AF:name=af_splash.sh
+#@AF:desc=Startup splash / intro banner for AlienFrame
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_splash_001
+
 # --- deps -------------------------------------------------------------------
 source "$(af_path_resolve module core)" 2>/dev/null || true
 declare -F af_io_write >/dev/null || source "$(af_path_resolve module io)" 2>/dev/null || true

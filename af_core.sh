@@ -4,6 +4,13 @@
 #  terminal primitives — colors, cursor, input, and screen utilities (af_io-based)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=core
+#@AF:name=af_core.sh
+#@AF:desc=Terminal primitives (color, cursor, input, and screen utilities)
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_term_001
+
 # --- DEPENDENCY -------------------------------------------------------------
 # shellcheck source=/dev/null
 source "$(af_path_resolve module io)"

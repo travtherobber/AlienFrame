@@ -4,6 +4,13 @@
 #  unified loader / runtime bootstrap (plugin-ready, af_io integrated)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=bootstrap
+#@AF:name=af_bootstrap.sh
+#@AF:desc=AlienFrame unified bootstrap and runtime entrypoint
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_boot_001
+
 # --- locate framework brain -------------------------------------------------
 AF_BASE_DIR="${AF_BASE_DIR:-$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 

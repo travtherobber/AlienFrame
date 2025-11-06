@@ -5,6 +5,13 @@
 #  (af_io integrated, printf-free)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=draw
+#@AF:name=af_draw.sh
+#@AF:desc=Drawing and text rendering layer (boxes, bars, separators)
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_draw_001
+
 # --- DEPENDENCIES -----------------------------------------------------------
 # shellcheck source=/dev/null
 source "$(af_path_resolve module core)"

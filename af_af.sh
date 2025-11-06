@@ -4,6 +4,13 @@
 #  meta-controller / loader / registry / namespace manager (af_io integrated)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=af
+#@AF:name=af_af.sh
+#@AF:desc=AlienFrame meta-controller, loader, and registry
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_meta_001
+
 # --- ENVIRONMENT GUARD ------------------------------------------------------
 if ((BASH_VERSINFO[0] < 4)); then
   builtin echo "AlienFrame requires bash >= 4.0" >&2

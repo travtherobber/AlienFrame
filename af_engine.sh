@@ -4,6 +4,13 @@
 #  runtime engine — panes, scrolling, input loop (uses af_core/af_layout/af_draw)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=engine
+#@AF:name=af_engine.sh
+#@AF:desc=Runtime engine — panes, scrolling, and input loop
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_engine_001
+
 # --- dependencies -----------------------------------------------------------
 # shellcheck source=/dev/null
 source "$(af_path_resolve module core)"

@@ -5,6 +5,13 @@
 #  (uses only Bash builtins like `echo` and arithmetic/string ops)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=io
+#@AF:name=af_io.sh
+#@AF:desc=Builtin-only I/O primitives (no printf or external binaries)
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_io_001
+
 # --- feature flags ----------------------------------------------------------
 AF_IO_VERSION="${AF_IO_VERSION:-v0.2.0}"
 : "${AF_IO_STRICT:=0}"   # if set to 1, avoids any echo escapes (keeps raw text)

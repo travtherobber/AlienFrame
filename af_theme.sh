@@ -5,6 +5,13 @@
 #  (simple palette logic + I/O-safe theme access)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=theme
+#@AF:name=af_theme.sh
+#@AF:desc=Theme definition and color-profile manager for AlienFrame
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_theme_001
+
 # --- deps -------------------------------------------------------------------
 source "$(af_path_resolve module io)" 2>/dev/null || true
 source "$(af_path_resolve module layout)" 2>/dev/null || true

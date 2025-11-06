@@ -4,6 +4,13 @@
 #  geometry + theme management layer (af_io-based)
 # ─────────────────────────────────────────────────────────────────────────────
 
+#@AF:module=layout
+#@AF:name=af_layout.sh
+#@AF:desc=Geometry, theming, and layout manager
+#@AF:version=1.0.0
+#@AF:type=core
+#@AF:uuid=af_core_layout_001
+
 # --- DEPENDENCIES -----------------------------------------------------------
 # shellcheck source=/dev/null
 source "$(af_path_resolve module io)"
