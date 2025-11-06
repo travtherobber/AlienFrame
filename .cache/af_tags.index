@@ -1,0 +1,10 @@
+io|af_io.sh|Builtin-only I/O primitives (no printf or external binaries)|core|1.0.0|af_core_io_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_io.sh
+engine|af_engine.sh|Runtime engine — panes, scrolling, and input loop|core|1.0.0|af_core_engine_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_engine.sh
+bootstrap|af_bootstrap.sh|AlienFrame unified bootstrap and runtime entrypoint|core|1.0.0|af_core_boot_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_bootstrap.sh
+splash|af_splash.sh|Startup splash / intro banner for AlienFrame|core|1.0.0|af_core_splash_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_splash.sh
+layout|af_layout.sh|Geometry, theming, and layout manager|core|1.0.0|af_core_layout_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_layout.sh
+af|af_af.sh|AlienFrame meta-controller, loader, and registry|core|1.0.0|af_core_meta_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_af.sh
+theme|af_theme.sh|Theme definition and color-profile manager for AlienFrame|core|1.0.0|af_core_theme_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_theme.sh
+draw|af_draw.sh|Drawing and text rendering layer (boxes, bars, separators)|core|1.0.0|af_core_draw_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_draw.sh
+core|af_core.sh|Terminal primitives (color, cursor, input, and screen utilities)|core|1.0.0|af_core_term_001|/home/travtherobber/Projects/sh#!/AlienFrame/af_core.sh
+path|af_path.sh|Dynamic path resolver with tag indexing and caching|core|1.1.0|af_core_path_002|/home/travtherobber/Projects/sh#!/AlienFrame/af_path.sh
