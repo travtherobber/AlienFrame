@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────
+# AlienFrame .gitignore
+# ─────────────────────────────────────────────────────────────
+
+# system / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.code-workspace
+
+# swap / temp files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+*.out
+*.test
+*.profile
+
+# AlienFrame runtime dirs
+.cache/
+.logs/
+.tmp/
+.temp/
+.tags/
+AF_*.state
+
+# allow empty dirs (keep .gitkeep files)
+!.cache/.gitkeep
+!.logs/.gitkeep
+!.tmp/.gitkeep
+
+# auto-generated indices
+af_tags.index
+*.index
+*.cache
+
+# debug or profiling artifacts
+debug.log
+trace.log
+core.*
+nohup.out
+
+# screenshots / previews
+preview_*.png
+screenshots/
+
+# Python venv (if any)
+__pycache__/
+.venv/
+venv/
