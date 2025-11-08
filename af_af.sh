@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 #  AlienFrame :: af_af.sh
-#  meta-controller / loader / registry / namespace manager (af_io integrated)
+#  meta-controller / loader / registry / namespace manager (adaptive version)
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=af
 #@AF:name=af_af.sh
 #@AF:desc=Meta-controller / loader / registry / namespace manager
-#@AF:version=1.1.0
+#@AF:version=1.2.0
 #@AF:type=core
 
 # --- BASE PATH DETECTION -----------------------------------------------------
@@ -19,41 +19,36 @@ if [[ -z "${AF_BASE_DIR:-}" || ! -d "$AF_BASE_DIR" ]]; then
     AF_BASE_DIR="$(pwd)"
   fi
 fi
-AF_BASE_DIR="${AF_BASE_DIR//#!/}"  # sanitize stray shell fragments
+AF_BASE_DIR="${AF_BASE_DIR//#!/}"
 export AF_BASE_DIR
 
 # --- SHELL COMPATIBILITY -----------------------------------------------------
-if [[ -f "$AF_BASE_DIR/af_sh_compat.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$AF_BASE_DIR/af_sh_compat.sh"
-else
-  echo "[AF:WARN] missing af_sh_compat.sh — limited features" >&2
-fi
+[[ -f "$AF_BASE_DIR/af_sh_compat.sh" ]] && source "$AF_BASE_DIR/af_sh_compat.sh" 2>/dev/null \
+  || echo "[AF:WARN] missing af_sh_compat.sh — limited features" >&2
 
 # --- METADATA ---------------------------------------------------------------
-AF_VERSION="v1.1.0"
+AF_VERSION="v1.2.0"
 AF_DEBUG="${AF_DEBUG:-0}"
 AF_LAZY="${AF_LAZY:-0}"
 
 # --- IO LAYER ---------------------------------------------------------------
 if [[ -f "$AF_BASE_DIR/af_io.sh" ]]; then
-  # shellcheck source=/dev/null
   source "$AF_BASE_DIR/af_io.sh"
 else
-  # minimal fallback if af_io missing
-  af_io_write()   { builtin echo -n "$*"; }
-  af_io_writeln() { builtin echo "$*"; }
-  af_io_to()      { local fd="$1"; shift; builtin echo "$*" >&"$fd"; }
+  af_io_write()   { builtin echo -n -- "$*"; }
+  af_io_writeln() { builtin echo -- "$*"; }
+  af_io_to()      { local fd="$1"; shift; builtin echo -- "$*" >&"$fd"; }
 fi
 
 # --- LOGGING UTILITIES ------------------------------------------------------
-af_log() { af_io_writeln "[AF] $*"; }
-af_dbg() { ((AF_DEBUG)) && af_io_to 2 "[AF:DBG] $*\n"; }
-af_err() { af_io_to 2 "[AF:ERR] $*\n"; }
+_af_stamp() { date +"%H:%M:%S"; }
+af_log() { af_io_writeln "[AF $(_af_stamp)] $*"; }
+af_dbg() { ((AF_DEBUG)) && af_io_to 2 "[AF:DBG $(_af_stamp)] $*\n"; }
+af_err() { af_io_to 2 "[AF:ERR $(_af_stamp)] $*\n"; }
+af_warn() { af_io_to 2 "[AF:WARN $(_af_stamp)] $*\n"; }
 
 # --- PATH MANAGEMENT --------------------------------------------------------
 if [[ -f "$AF_BASE_DIR/af_path.sh" ]]; then
-  # shellcheck source=/dev/null
   source "$AF_BASE_DIR/af_path.sh"
 else
   af_err "missing core dependency: af_path.sh"
@@ -61,16 +56,16 @@ else
 fi
 
 # --- REGISTRIES -------------------------------------------------------------
-declare -Ag AF_MODULES=()   # name → file
-declare -Ag AF_PLUGINS=()   # name → file
-declare -Ag AF_FEATURES=()  # misc flags / plugin registry
+declare -Ag AF_MODULES=()
+declare -Ag AF_PLUGINS=()
+declare -Ag AF_FEATURES=()
 
 # --- INTERNAL SOURCE HELPER -------------------------------------------------
 _af_source() {
   local f="$1"
-  [[ -f "$f" ]] || { af_err "cannot source $f"; return 1; }
-  # shellcheck source=/dev/null
-  source "$f"
+  [[ -f "$f" ]] || { af_err "cannot source: $f"; return 1; }
+  # ensure it doesn’t print banners when sourced indirectly
+  ( export AF_SILENT=1; source "$f" ) || af_err "error sourcing: $f"
 }
 
 # --- MODULE / PLUGIN LOADER -------------------------------------------------
@@ -80,19 +75,33 @@ af_load() {
     module)
       [[ -n "${AF_MODULES[$name]:-}" ]] && return 0
       path="$(af_path_resolve module "$name")"
-      [[ -f "$path" ]] || { af_err "module not found: $name ($path)"; return 1; }
-      _af_source "$path" && AF_MODULES["$name"]="$path"
+      if [[ -f "$path" ]]; then
+        echo "[AF:load] sourcing $name → $path" >&2
+        source "$path"    # ← ensure no $() or pipes here
+        AF_MODULES["$name"]="$path"
+      else
+        af_err "module not found: $name ($path)"
+        return 1
+      fi
       ;;
     plugin)
       [[ -n "${AF_PLUGINS[$name]:-}" ]] && return 0
       path="$(af_path_resolve plugin "$name")"
-      [[ -f "$path" ]] || { af_err "plugin not found: $name ($path)"; return 1; }
-      _af_source "$path" && AF_PLUGINS["$name"]="$path"
+      if [[ -f "$path" ]]; then
+        echo "[AF:load] sourcing plugin $name → $path" >&2
+        source "$path"
+        AF_PLUGINS["$name"]="$path"
+      else
+        af_err "plugin not found: $name ($path)"
+        return 1
+      fi
       ;;
     *)
-      af_err "invalid load type: $type"; return 1 ;;
+      af_err "invalid load type: $type"
+      return 1 ;;
   esac
 }
+
 
 af_require()     { af_load module "$1"; }
 af_plugin_load() { af_load plugin "$1"; }
@@ -128,23 +137,31 @@ af_init() {
   local profile="${1:-default}"
   case "$profile" in
     minimal)
+      af_require io
       af_require core
       af_require draw
       ;;
     default|*)
       af_require io
       af_require core
-      af_require draw
       af_require layout
+      af_require draw
       af_require engine
-      [[ -f "$(af_path_resolve module splash)" ]] && af_require splash
+      [[ -f "$(af_path_resolve module splash 2>/dev/null)" ]] && af_require splash
       ;;
   esac
   af_dbg "profile initialized: $profile"
 }
 
+# --- PROFILE FILES (optional external definitions) --------------------------
+_af_profile_load() {
+  local f="$AF_BASE_DIR/profiles/$1.af"
+  [[ -f "$f" ]] && source "$f" && af_dbg "custom profile: $1 loaded"
+}
+
 # --- BANNER -----------------------------------------------------------------
 af_banner() {
+  [[ "${AF_SILENT:-0}" == 1 ]] && return
   af_io_writeln "AlienFrame ${AF_VERSION} — base: ${AF_BASE_DIR}"
 }
 

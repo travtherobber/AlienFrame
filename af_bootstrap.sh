@@ -21,6 +21,9 @@ fi
 AF_BASE_DIR="${AF_BASE_DIR//#!/}"
 export AF_BASE_DIR
 
+# define tty output channel early for IO-safe functions
+AF_IO_TTY="/dev/tty"
+
 # --- locate framework nucleus ------------------------------------------------
 AF_MAIN="$AF_BASE_DIR/af_af.sh"
 if [[ -f "$AF_MAIN" ]]; then

@@ -1,32 +1,42 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 #  AlienFrame :: af_layout.sh
-#  geometry + theme management layer (af_io-based)
+#  geometry + theme management (adaptive, no external deps)
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=layout
 #@AF:name=af_layout.sh
-#@AF:desc=Geometry, theming, and layout manager
-#@AF:version=1.1.0
+#@AF:desc=Geometry, theming, and layout manager (auto-adaptive)
+#@AF:version=1.2.0
 #@AF:type=core
-#@AF:uuid=af_core_layout_002
+#@AF:uuid=af_core_layout_003
 
 # --- DEPENDENCIES -----------------------------------------------------------
 # shellcheck source=/dev/null
-source "$(af_path_resolve module io)"
-# shellcheck source=/dev/null
-source "$(af_path_resolve module core)"
+source "$(af_path_resolve module io 2>/dev/null)" 2>/dev/null || true
+source "$(af_path_resolve module core 2>/dev/null)" 2>/dev/null || true
+
+# --- FALLBACKS --------------------------------------------------------------
+declare -g AF_NO_COLOR="${AF_NO_COLOR:-0}"
+
+[[ "$(declare -F af_io_writeln)" ]] || af_io_writeln() { builtin echo "$*"; }
+[[ "$(declare -F af_io_write)" ]]   || af_io_write()   { builtin echo -n "$*"; }
 
 # --- THEME HANDLING ---------------------------------------------------------
-# cache last theme to avoid re-reading file on each af_layout_color()
 __AF_THEME_LAST=""
 __AF_THEME_FILE=""
 
 af_layout_load_theme() {
   local theme="${1:-default}"
   [[ "$theme" == "$__AF_THEME_LAST" ]] && return 0
-
   __AF_THEME_LAST="$theme"
-  __AF_THEME_FILE="$(af_path_resolve theme "$theme")"
+
+  # prefer external theme loader if present
+  if declare -F af_theme_load >/dev/null; then
+    af_theme_load "$theme"
+    return
+  fi
+
+  __AF_THEME_FILE="$(af_path_resolve theme "$theme" 2>/dev/null)"
   af_core_apply_default_theme
 
   ((AF_NO_COLOR)) && return 0
@@ -34,14 +44,15 @@ af_layout_load_theme() {
 
   local k v
   while IFS='=' read -r k v; do
+    k="${k//[[:space:]]/}" v="${v//[[:space:]]/}" v="${v//$'\r'/}"
     [[ -z "$k" || "$k" =~ ^# ]] && continue
-    v="${v//[[:space:]]/}"
     case "$k" in
       FG)     AF_FG="$v" ;;
       BG)     AF_BG="$v" ;;
       BORDER) AF_BORDER="$v" ;;
       ACCENT) AF_ACCENT="$v" ;;
       TEXT)   AF_TEXT="$v" ;;
+      *)      AF_EXTRA_THEME["$k"]="$v" ;;
     esac
   done < "$__AF_THEME_FILE"
 }
@@ -51,7 +62,13 @@ af_layout_load_theme() {
 af_layout_geometry() {
   local mode="${1:-full}" wp="${2:-100}" hp="${3:-100}"
   local cols rows
-  read cols rows <<<"$(af_core_size)"
+
+  if declare -F af_term_size >/dev/null; then
+    read cols rows <<<"$(af_term_size)"
+  else
+    read cols rows <<<"$(af_core_size)"
+  fi
+
   ((cols<=0)) && cols=80
   ((rows<=0)) && rows=24
 
@@ -59,15 +76,12 @@ af_layout_geometry() {
   case "$mode" in
     full) ;;
     left-half)   ((w=cols/2)) ;;
-    right-half)  ((w=cols/2,x=cols/2)) ;;
+    right-half)  ((w=cols/2, x=cols/2)) ;;
     top-half)    ((h=rows/2)) ;;
-    bottom-half) ((h=rows/2,y=rows/2)) ;;
-    center-box)  ((w=cols/2,h=rows/2,x=cols/4,y=rows/4)) ;;
-    percent)     ((w=cols*wp/100,h=rows*hp/100)) ;;
-    custom:*)    # custom:x,y,w,h
-      local geo="${mode#custom:}"
-      IFS=',' read -r x y w h <<<"$geo"
-      ;;
+    bottom-half) ((h=rows/2, y=rows/2)) ;;
+    center-box)  ((w=cols/2, h=rows/2, x=cols/4, y=rows/4)) ;;
+    percent)     ((w=cols*wp/100, h=rows*hp/100)) ;;
+    custom:*)    IFS=',' read -r x y w h <<<"${mode#custom:}" ;;
     *) ;;
   esac
 
@@ -88,12 +102,12 @@ af_layout_color() {
 # input: cols rows width height x y pad
 # output: x_in y_in w_in h_in
 af_layout_inner_box() {
-  local c="$1" r="$2" w="$3" h="$4" x="$5" y="$6" pad="${7:-1}"
+  local _c="$1" _r="$2" _w="$3" _h="$4" _x="$5" _y="$6" pad="${7:-1}"
   ((pad<0)) && pad=0
-  local x2=$((x + pad))
-  local y2=$((y + pad))
-  local w2=$((w - pad*2))
-  local h2=$((h - pad*2))
+  local x2=$((_x + pad))
+  local y2=$((_y + pad))
+  local w2=$((_w - pad*2))
+  local h2=$((_h - pad*2))
   ((w2<1)) && w2=1
   ((h2<1)) && h2=1
   af_io_writeln "$x2 $y2 $w2 $h2"
@@ -112,4 +126,5 @@ af_layout_center_text() {
   af_io_write "$text"
 }
 
-# --- END MODULE -------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────────
+# END MODULE

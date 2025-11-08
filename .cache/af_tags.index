@@ -1,11 +1,14 @@
-io|af_io.sh|Builtin-only I/O primitives (no printf or external binaries)|core|1.1.0|af_core_io_002|/home/travtherobber/Projects/shpro/AlienFrame/af_io.sh
-compat|af_sh_compat.sh|Cross-shell compatibility layer (bash, zsh, dash)|core|1.1.0|af_core_compat_002|/home/travtherobber/Projects/shpro/AlienFrame/af_sh_compat.sh
-engine|af_engine.sh|Runtime engine — panes, scrolling, and input loop|core|1.1.0|af_core_engine_002|/home/travtherobber/Projects/shpro/AlienFrame/af_engine.sh
+io|af_io.sh|Pure built-in I/O primitives (no printf, no external deps)|core|2.0.0|af_core_io_003|/home/travtherobber/Projects/shpro/AlienFrame/af_io.sh
+compat|af_sh_compat.sh|Cross-shell compatibility layer (adaptive, zero-dep)|core|1.2.0|af_core_compat_003|/home/travtherobber/Projects/shpro/AlienFrame/af_sh_compat.sh
+term_size|af_term_size.sh|Terminal size detection (pure ANSI, no printf/stty)|core|1.0.2|af_core_term_size_001|/home/travtherobber/Projects/shpro/AlienFrame/af_term_size.sh
+engine|af_engine.sh|Runtime engine (panes, scrolling, input loop)|core|1.2.0|af_core_engine_003|/home/travtherobber/Projects/shpro/AlienFrame/af_engine.sh
 bootstrap|af_bootstrap.sh|Primary entry bootstrapper for AlienFrame|core|1.1.0|af_core_boot_001|/home/travtherobber/Projects/shpro/AlienFrame/af_bootstrap.sh
-splash|af_splash.sh|Animated intro splash for AlienFrame|core|1.1.0|af_core_splash_002|/home/travtherobber/Projects/shpro/AlienFrame/af_splash.sh
-layout|af_layout.sh|Geometry, theming, and layout manager|core|1.1.0|af_core_layout_002|/home/travtherobber/Projects/shpro/AlienFrame/af_layout.sh
-af|af_af.sh|Meta-controller / loader / registry / namespace manager|core|1.1.0||/home/travtherobber/Projects/shpro/AlienFrame/af_af.sh
-theme|af_theme.sh|Color-profile and theme manager for AlienFrame|core|1.1.0|af_core_theme_002|/home/travtherobber/Projects/shpro/AlienFrame/af_theme.sh
-draw|af_draw.sh|Drawing and text rendering layer (boxes, bars, separators)|core|1.2.0|af_core_draw_002|/home/travtherobber/Projects/shpro/AlienFrame/af_draw.sh
-core|af_core.sh|Terminal primitives (color, cursor, input, and screen utilities)|core|1.2.0|af_core_term_002|/home/travtherobber/Projects/shpro/AlienFrame/af_core.sh
-path|af_path.sh|Dynamic path resolver with tag indexing and caching|core|1.2.0|af_core_path_003|/home/travtherobber/Projects/shpro/AlienFrame/af_path.sh
+splash|af_splash.sh|Animated intro splash for AlienFrame (adaptive)|core|1.2.0|af_core_splash_003|/home/travtherobber/Projects/shpro/AlienFrame/af_splash.sh
+layout|af_layout.sh|Geometry, theming, and layout manager (auto-adaptive)|core|1.2.0|af_core_layout_003|/home/travtherobber/Projects/shpro/AlienFrame/af_layout.sh
+af|af_af.sh|Meta-controller / loader / registry / namespace manager|core|1.2.0||/home/travtherobber/Projects/shpro/AlienFrame/af_af.sh
+theme|af_theme.sh|Color-profile and theme manager (adaptive + user layer)|core|1.2.0|af_core_theme_003|/home/travtherobber/Projects/shpro/AlienFrame/af_theme.sh
+draw|af_draw.sh|Drawing and text rendering layer (auto-adaptive to term modules)|core|2.0.0|af_core_draw_003|/home/travtherobber/Projects/shpro/AlienFrame/af_draw.sh
+term_input|af_term_input.sh|Keyboard input / key decoding layer (pure bash builtins)|core|1.0.0|af_core_term_input_001|/home/travtherobber/Projects/shpro/AlienFrame/af_term_input.sh
+term_color|af_term_color.sh|ANSI 256-color control and text style utilities|core|1.0.0|af_core_term_color_001|/home/travtherobber/Projects/shpro/AlienFrame/af_term_color.sh
+core|af_core.sh|High-level core interface combining I/O, color, size, and cursor utils|core|2.0.0|af_core_fascade_001|/home/travtherobber/Projects/shpro/AlienFrame/af_core.sh
+path|af_path.sh|Dynamic path resolver with tag indexing, caching, and layering|core|1.3.0|af_core_path_004|/home/travtherobber/Projects/shpro/AlienFrame/af_path.sh
