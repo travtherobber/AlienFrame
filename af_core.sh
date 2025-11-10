@@ -65,6 +65,20 @@ af_core_info() {
        "size=$([[ $(declare -F af_term_size) ]] && echo ok || echo missing)"
 }
 
+# --- CURSOR / SCREEN CONTROL -------------------------------------------------
+af_core_clear()       { af_io_write $'\033[2J'; }
+af_core_hide_cursor() { af_io_write $'\033[?25l'; }
+af_core_show_cursor() { af_io_write $'\033[?25h'; }
+
+af_core_cursor() {
+  local row="${1:-1}" col="${2:-1}"
+  # make sure both are integers
+  row=${row//[^0-9]/}
+  col=${col//[^0-9]/}
+  printf '\033[%s;%sH' "$row" "$col"
+}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # END MODULE
 # 

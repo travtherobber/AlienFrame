@@ -58,32 +58,56 @@ af_layout_load_theme() {
 }
 
 # --- GEOMETRY HANDLING ------------------------------------------------------
-# returns: cols rows width height x y
+# returns: cols rows width height x y   (x,y are 1-based)
 af_layout_geometry() {
   local mode="${1:-full}" wp="${2:-100}" hp="${3:-100}"
   local cols rows
-
-  if declare -F af_term_size >/dev/null; then
-    read cols rows <<<"$(af_term_size)"
-  else
-    read cols rows <<<"$(af_core_size)"
-  fi
-
+  read cols rows <<<"$(af_core_size)"
   ((cols<=0)) && cols=80
   ((rows<=0)) && rows=24
 
-  local w=$cols h=$rows x=0 y=0
+  # defaults (full screen, 1-based origin)
+  local w="$cols" h="$rows" x=1 y=1
+
   case "$mode" in
-    full) ;;
-    left-half)   ((w=cols/2)) ;;
-    right-half)  ((w=cols/2, x=cols/2)) ;;
-    top-half)    ((h=rows/2)) ;;
-    bottom-half) ((h=rows/2, y=rows/2)) ;;
-    center-box)  ((w=cols/2, h=rows/2, x=cols/4, y=rows/4)) ;;
-    percent)     ((w=cols*wp/100, h=rows*hp/100)) ;;
-    custom:*)    IFS=',' read -r x y w h <<<"${mode#custom:}" ;;
-    *) ;;
+    full)
+      : ;;
+    left-half)
+      (( w = cols/2, h = rows, x = 1, y = 1 ))
+      ;;
+    right-half)
+      (( w = cols/2, h = rows, x = cols - w + 1, y = 1 ))
+      ;;
+    top-half)
+      (( w = cols, h = rows/2, x = 1, y = 1 ))
+      ;;
+    bottom-half)
+      (( w = cols, h = rows/2, x = 1, y = rows - h + 1 ))
+      ;;
+    center-box)
+      (( w = cols/2, h = rows/2 ))
+      (( x = (cols - w)/2 + 1, y = (rows - h)/2 + 1 ))
+      ;;
+    percent)
+      (( w = (cols * wp) / 100, h = (rows * hp) / 100 ))
+      (( x = (cols - w)/2 + 1, y = (rows - h)/2 + 1 ))
+      ;;
+    custom:*)
+      # custom:x,y,w,h  (accept either 0- or 1-based user input; normalize to 1-based)
+      local geo="${mode#custom:}"
+      IFS=',' read -r x y w h <<<"$geo"
+      (( x<1 )) && (( x+=1 ))   # if someone passed 0, shift to 1
+      (( y<1 )) && (( y+=1 ))
+      ;;
   esac
+
+  # sanity clamps
+  (( w<1 )) && w=1
+  (( h<1 )) && h=1
+  (( x<1 )) && x=1
+  (( y<1 )) && y=1
+  (( x+w-1 > cols )) && (( w = cols - x + 1 ))
+  (( y+h-1 > rows )) && (( h = rows - y + 1 ))
 
   af_io_writeln "$cols $rows $w $h $x $y"
 }
