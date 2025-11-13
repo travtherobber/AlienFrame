@@ -1,44 +1,56 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 #  AlienFrame :: af_core.sh
-#  unified terminal core façade — re-exports color, size, cursor, and screen
+#  Terminal core façade — color, cursor, size, screen, I/O integration
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=core
 #@AF:name=af_core.sh
-#@AF:desc=High-level core interface combining I/O, color, size, and cursor utils
-#@AF:version=2.0.0
+#@AF:desc=Unified terminal core layer (color, cursor, size, screen)
+#@AF:version=3.0.0
 #@AF:type=core
-#@AF:uuid=af_core_fascade_001
+#@AF:uuid=af_core_facade_300
 
-# --- ensure IO layer ---------------------------------------------------------
+# Ensure path + IO are present -----------------------------------------------
 if ! declare -F af_io_write >/dev/null 2>&1; then
-  src="$(af_path_resolve module io 2>/dev/null)"
-  [[ -f "$src" ]] && source "$src"
+  if declare -F af_path_resolve >/dev/null 2>&1; then
+    src="$(af_path_resolve module io 2>/dev/null)"
+    [[ -f "$src" ]] && source "$src"
+  fi
 fi
 
-# --- load terminal submodules ------------------------------------------------
+# Fallback minimal I/O (in case path/IO not yet loaded)
+declare -F af_io_write >/dev/null || {
+  af_io_write()   { builtin echo -n -- "$*"; }
+  af_io_writeln() { builtin echo -- "$*"; }
+  af_io_repeat()  { local n="$1" ch="${2:- }"; while ((n-- > 0)); do builtin echo -n "$ch"; done; }
+  af_io_csi()     { af_io_write $'\033['"$1"; }
+  af_io_esc()     { af_io_write $'\033'"$1"; }
+}
+
+# Load terminal submodules (color / size / input) ----------------------------
 for mod in term_color term_size term_input; do
-  path="$(af_path_resolve module "$mod" 2>/dev/null)"
-  [[ -f "$path" ]] && source "$path"
+  if declare -F af_path_resolve >/dev/null 2>&1; then
+    path="$(af_path_resolve module "$mod" 2>/dev/null)"
+    [[ -f "$path" ]] && source "$path"
+  fi
 done
 
-# --- FALLBACKS ---------------------------------------------------------------
-# if term_color wasn’t found, patch in safe defaults
+# Fallback color implementation ----------------------------------------------
 if ! declare -F af_term_color_fg >/dev/null 2>&1; then
   af_term_color_reset() { af_io_write $'\033[0m'; }
-  af_term_color_fg()    { af_io_write $'\033[38;5;'"$1"m; }
-  af_term_color_bg()    { af_io_write $'\033[48;5;'"$1"m; }
+  af_term_color_fg()    { af_io_write $'\033[38;5;'"$1"'m'; }
+  af_term_color_bg()    { af_io_write $'\033[48;5;'"$1"'m'; }
   af_term_bold()        { af_io_write $'\033[1m'; }
   af_term_dim()         { af_io_write $'\033[2m'; }
   af_term_underline()   { af_io_write $'\033[4m'; }
 fi
 
-# if term_size wasn’t found, fallback to env vars
+# Fallback size implementation -----------------------------------------------
 if ! declare -F af_term_size >/dev/null 2>&1; then
-  af_term_size() { echo "${COLUMNS:-80} ${LINES:-24}"; }
+  af_term_size() { af_io_writeln "${COLUMNS:-80} ${LINES:-24}"; }
 fi
 
-# --- PUBLIC API (re-exports) -------------------------------------------------
+# PUBLIC API — color ---------------------------------------------------------
 af_core_color_reset() { af_term_color_reset "$@"; }
 af_core_color_fg()    { af_term_color_fg "$@"; }
 af_core_color_bg()    { af_term_color_bg "$@"; }
@@ -46,39 +58,33 @@ af_core_bold()        { af_term_bold "$@"; }
 af_core_dim()         { af_term_dim "$@"; }
 af_core_underline()   { af_term_underline "$@"; }
 
-af_core_clear()       { af_io_write $'\033[2J'; }
-af_core_cursor()      { af_io_write $'\033['"$1"';'"$2"'H'; }
-af_core_hide_cursor() { af_io_write $'\033[?25l'; }
-af_core_show_cursor() { af_io_write $'\033[?25h'; }
-
-af_core_size()        { af_term_size "$@"; }
-
-# --- color preset defaults ---------------------------------------------------
-af_core_apply_default_theme() {
-  AF_FG=250 AF_BG=0 AF_BORDER=240 AF_ACCENT=118 AF_TEXT=250
-}
-
-# --- info helper -------------------------------------------------------------
-af_core_info() {
-  echo "[AF:core] modules: io=$([[ $(declare -F af_io_write) ]] && echo ok || echo missing), " \
-       "color=$([[ $(declare -F af_term_color_fg) ]] && echo ok || echo missing), " \
-       "size=$([[ $(declare -F af_term_size) ]] && echo ok || echo missing)"
-}
-
-# --- CURSOR / SCREEN CONTROL -------------------------------------------------
-af_core_clear()       { af_io_write $'\033[2J'; }
-af_core_hide_cursor() { af_io_write $'\033[?25l'; }
-af_core_show_cursor() { af_io_write $'\033[?25h'; }
+# PUBLIC API — screen + cursor -----------------------------------------------
+af_core_clear()       { af_io_csi "2J"; af_io_csi "H"; }
+af_core_hide_cursor() { af_io_csi "?25l"; }
+af_core_show_cursor() { af_io_csi "?25h"; }
 
 af_core_cursor() {
-  local row="${1:-1}" col="${2:-1}"
-  # make sure both are integers
-  row=${row//[^0-9]/}
-  col=${col//[^0-9]/}
-  printf '\033[%s;%sH' "$row" "$col"
+  local row="$1" col="$2"
+  (( row < 1 )) && row=1
+  (( col < 1 )) && col=1
+  af_io_csi "${row};${col}H"
 }
 
+# PUBLIC API — size -----------------------------------------------------------
+af_core_size() { af_term_size "$@"; }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# END MODULE
-# 
+# THEME defaults --------------------------------------------------------------
+af_core_apply_default_theme() {
+  AF_FG=250
+  AF_BG=0
+  AF_BORDER=240
+  AF_ACCENT=118
+  AF_TEXT=250
+}
+
+# Debug info ------------------------------------------------------------------
+af_core_info() {
+  af_io_writeln "[AF:core] io=$([[ $(declare -F af_io_write) ]] && echo ok || echo miss), color=$([[ $(declare -F af_term_color_fg) ]] && echo ok || echo miss), size=$([[ $(declare -F af_term_size) ]] && echo ok || echo miss)"
+}
+
+# END MODULE -----------------------------------------------------------------
