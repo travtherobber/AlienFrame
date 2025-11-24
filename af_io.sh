@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-#  AlienFrame :: af_io.sh (v3)
-#  pure built-in I/O layer — foundation for all AlienFrame terminal modules
+#  AlienFrame :: af_io.sh (v3.1 - Compat Fix)
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=io
 #@AF:name=af_io.sh
-#@AF:desc=Pure built-in I/O primitives (no printf, no external deps)
-#@AF:version=3.0.0
+#@AF:desc=Pure built-in I/O primitives (removed risky double-dash)
+#@AF:version=3.1.0
 #@AF:type=core
-#@AF:uuid=af_core_io_004
+#@AF:uuid=af_core_io_310
 
-AF_IO_VERSION="v3.0.0"
+AF_IO_VERSION="v3.1.0"
 
 # Detect whether echo supports -n sanely
 _af_io_echo_supports_n=1
@@ -20,14 +19,15 @@ _af_io_echo_supports_n=1
 af_io_write() {
   (( $# == 0 )) && return
   if ((_af_io_echo_supports_n)); then
-    builtin echo -n -- "$*"
+    # Removed -- to prevent it from being printed on some systems
+    builtin echo -n "$*"
   else
-    builtin echo -- "$*"
+    builtin echo "$*"
     [[ -t 1 ]] && builtin echo -n $'\r'
   fi
 }
 
-af_io_writeln() { builtin echo -- "$*"; }
+af_io_writeln() { builtin echo "$*"; }
 af_io_nl()      { builtin echo; }
 
 # Repeaters / padding --------------------------------------------------------
@@ -65,9 +65,9 @@ af_io_show_cursor()  { af_io_csi "?25h"; }
 af_io_to() {
   local fd="$1"; shift
   if ((_af_io_echo_supports_n)); then
-    eval "builtin echo -n -- \"\$*\" >&$fd"
+    eval "builtin echo -n \"\$*\" >&$fd"
   else
-    eval "builtin echo -- \"\$*\" >&$fd"
+    eval "builtin echo \"\$*\" >&$fd"
   fi
 }
 

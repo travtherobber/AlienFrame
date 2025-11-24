@@ -1,98 +1,124 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-#  AlienFrame :: af_bootstrap.sh
-#  universal loader — auto-detects framework path, pulls af_af, ensures I/O
+#  AlienFrame :: af_bootstrap.sh (v1.8.0 - With Splash)
 # ─────────────────────────────────────────────────────────────────────────────
-#@AF:uuid=af_core_boot_001
 #@AF:module=bootstrap
-#@AF:name=af_bootstrap.sh
-#@AF:desc=Primary entry bootstrapper for AlienFrame
-#@AF:version=1.1.0
 #@AF:type=core
 
-# --- establish base path -----------------------------------------------------
+# --- 1. Setup Environment ---
 if [ -n "${BASH_SOURCE[0]:-}" ]; then
   AF_BASE_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-elif [ -n "${(%):-%N}" ]; then
-  AF_BASE_DIR="$(cd -- "$(dirname "${(%):-%N}")" && pwd)"
 else
   AF_BASE_DIR="$(pwd)"
 fi
-AF_BASE_DIR="${AF_BASE_DIR//#!/}"
 export AF_BASE_DIR
-
-# define tty output channel early for IO-safe functions
 AF_IO_TTY="/dev/tty"
 
-# --- locate framework nucleus ------------------------------------------------
-AF_MAIN="$AF_BASE_DIR/af_af.sh"
-if [[ -f "$AF_MAIN" ]]; then
-  # shellcheck source=/dev/null
-  source "$AF_MAIN"
-else
-  builtin echo "[AF:ERR] missing af_af.sh at $AF_BASE_DIR" >&2
-  exit 1
-fi
+# --- 2. Manual Loading (Force Load All Modules) ---
+source "$AF_BASE_DIR/af_io.sh"
+source "$AF_BASE_DIR/af_sh_compat.sh"
+source "$AF_BASE_DIR/af_term_size.sh"
+source "$AF_BASE_DIR/af_term_color.sh"
+source "$AF_BASE_DIR/af_term_input.sh"
+source "$AF_BASE_DIR/af_path.sh"
+source "$AF_BASE_DIR/af_core.sh"
+source "$AF_BASE_DIR/af_layout.sh"
+source "$AF_BASE_DIR/af_draw.sh"
+source "$AF_BASE_DIR/af_list.sh"
+source "$AF_BASE_DIR/af_splash.sh" # <--- Added Splash Module
+source "$AF_BASE_DIR/af_engine.sh"
 
-# --- fallback mini-I/O -------------------------------------------------------
-if ! declare -F af_io_write >/dev/null 2>&1; then
-  af_io_write()   { builtin echo -n "$*"; }
-  af_io_writeln() { builtin echo "$*"; }
-  af_io_repeat()  { local n="$1" ch="${2:- }"; local o=""; for((i=0;i<n;i++));do o+="$ch";done;builtin echo -n "$o"; }
-  af_io_esc()     { builtin echo -n $'\033'"$1"; }
-  af_io_fmt()     { local fmt="$1";shift;local out="$fmt";for a in "$@";do out="${out/%s/$a}";done;builtin echo -n "$out"; }
-fi
+# --- 3. User Logic (File Viewer) ---
+af_user_on_select() {
+  local panel="$1"
+  local item="$2"
 
-# --- bootstrap initialization ------------------------------------------------
-af_bootstrap_init() {
-  local profile="${1:-default}"
-  af_init "$profile"
-  af_io_writeln "[AF:boot] profile → $profile"
+  # Clean Filename
+  item="$(echo "$item" | sed 's/\x1b\[[0-9;]*m//g')"
+  item="${item#"${item%%[![:space:]]*}"}"
+  item="${item%"${item##*[![:space:]]}"}"
+
+  if [[ "$panel" == "inventory" ]]; then
+     local content=""
+     local fpath="$AF_BASE_DIR/$item"
+     
+     af_engine_panel_update "header" "OPENING: $item"
+
+     if [[ -d "$fpath" ]]; then
+         content="[DIRECTORY]\n$(ls -1 "$fpath" 2>/dev/null | head -n 20)"
+     elif [[ -f "$fpath" ]]; then
+         if grep -qI . "$fpath" 2>/dev/null; then
+             # Text
+             content="$(head -n 30 "$fpath" | cut -c 1-50)"
+         else
+             # Binary
+             if command -v xxd >/dev/null; then
+                content="$(head -n 20 "$fpath" | xxd -g 1 | cut -c1-34)"
+             else
+                content="[BINARY FILE]"
+             fi
+         fi
+     else
+         content="[ERROR] File not found:\n$fpath"
+     fi
+     
+     af_engine_panel_update "data" "$content"
+  fi
 }
 
-# --- run optional splash + engine demo ---------------------------------------
 af_bootstrap_run() {
-  local use_demo="${1:-1}"
+  # Screen Setup
+  af_core_clear
+  af_core_hide_cursor
+  
+  # Theme Setup
+  local theme_file="$AF_BASE_DIR/themes/cyber.theme"
+  if [[ ! -f "$theme_file" ]]; then
+     mkdir -p "$AF_BASE_DIR/themes"
+     printf "FG=15\nBG=0\nBORDER=24\nACCENT=46\nTEXT=51\n" > "$theme_file"
+  fi
+  export AF_THEME="cyber"
+  af_layout_load_theme "cyber"
 
-  # Clear and hide cursor if core loaded
-  declare -F af_core_clear >/dev/null  && af_core_clear
-  declare -F af_core_hide_cursor >/dev/null && af_core_hide_cursor
+  # Geometry
+  local cols rows
+  read cols rows <<<"$(af_core_size)"
+  (( cols < 20 )) && cols=80
+  (( rows < 10 )) && rows=24
 
-  # Splash screen
+  local head_h=3
+  local body_h=$(( rows - 3 ))
+  local left_w=$(( cols / 2 ))
+  local right_w=$(( cols - left_w ))
+  local right_x=$(( left_w + 1 ))
+
+  # Initial Data
+  local sys_info="SYSTEM READY | $USER"
+  local files="$(ls -1p | head -n 50)"
+  local intro="STATUS: IDLE\n\nSelect a file and press ENTER."
+
+  # Init Panels
+  af_engine_panel_add "header"    "custom:1,1,${cols},${head_h}"        "SYSTEM"    "$sys_info" "cyber" "text"
+  af_engine_panel_add "inventory" "custom:1,4,${left_w},${body_h}"      "INVENTORY"     "$files"    "cyber" "list"
+  af_engine_panel_add "data"      "custom:${right_x},4,${right_w},${body_h}" "VIEWER"   "$intro"    "cyber" "text"
+
+  # --- SPLASH SEQUENCE ---
+  # Only run if splash function exists
   if declare -F af_splash_show >/dev/null; then
-    af_splash_show
-  else
-    af_io_writeln "[AF:boot] no splash available"
+      af_splash_show
+      # Small delay to let the user admire the logo
+      sleep 0.5
   fi
+  # -----------------------
 
-  # Demo panels (optional)
-  if (( use_demo )); then
-    local left="AlienFrame left pane\nUse J/K or arrows to scroll.\nTAB to switch focus.\nQ to quit."
-    local right="Right pane.\nAdd your own content here.\nPage/line toggle with 'p'."
+  # START ENGINE
+  af_engine_run
 
-    declare -F af_engine_panel_add >/dev/null && {
-      af_engine_panel_add "left"  "left-half"  "AlienFrame • Left"  "$left"  "default"
-      af_engine_panel_add "right" "right-half" "AlienFrame • Right" "$right" "default"
-    }
-  fi
-
-  # Start engine
-  if declare -F af_engine_run >/dev/null; then
-    af_engine_run
-  else
-    af_io_writeln "[AF:boot] no engine detected"
-  fi
-
-  # Restore cursor and exit banner
-  declare -F af_core_show_cursor >/dev/null && af_core_show_cursor
-  af_io_writeln "[AF:boot] Engine stopped cleanly."
+  # Cleanup
+  af_core_show_cursor
+  echo "[AF] Exited."
 }
 
-# --- entrypoint when executed directly ---------------------------------------
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  af_bootstrap_init default
-  af_bootstrap_run 1
+  af_bootstrap_run
 fi
-
-# ─────────────────────────────────────────────────────────────────────────────
-# END MODULE

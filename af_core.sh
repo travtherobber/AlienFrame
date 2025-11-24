@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-#  AlienFrame :: af_core.sh
-#  Terminal core façade — color, cursor, size, screen, I/O integration
+#  AlienFrame :: af_core.sh (v3.1 - Fixes)
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=core
 #@AF:name=af_core.sh
 #@AF:desc=Unified terminal core layer (color, cursor, size, screen)
-#@AF:version=3.0.0
+#@AF:version=3.1.0
 #@AF:type=core
-#@AF:uuid=af_core_facade_300
+#@AF:uuid=af_core_facade_310
 
 # Ensure path + IO are present -----------------------------------------------
 if ! declare -F af_io_write >/dev/null 2>&1; then
@@ -62,6 +61,8 @@ af_core_underline()   { af_term_underline "$@"; }
 af_core_clear()       { af_io_csi "2J"; af_io_csi "H"; }
 af_core_hide_cursor() { af_io_csi "?25l"; }
 af_core_show_cursor() { af_io_csi "?25h"; }
+# FIX: Expose repeat function
+af_core_repeat()      { af_io_repeat "$@"; }
 
 af_core_cursor() {
   local row="$1" col="$2"
@@ -84,7 +85,5 @@ af_core_apply_default_theme() {
 
 # Debug info ------------------------------------------------------------------
 af_core_info() {
-  af_io_writeln "[AF:core] io=$([[ $(declare -F af_io_write) ]] && echo ok || echo miss), color=$([[ $(declare -F af_term_color_fg) ]] && echo ok || echo miss), size=$([[ $(declare -F af_term_size) ]] && echo ok || echo miss)"
+  af_io_writeln "[AF:core] io=$([[ $(declare -F af_io_write) ]] && echo ok), color=$([[ $(declare -F af_term_color_fg) ]] && echo ok), repeat=$([[ $(declare -F af_core_repeat) ]] && echo ok)"
 }
-
-# END MODULE -----------------------------------------------------------------

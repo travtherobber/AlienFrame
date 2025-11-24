@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-#  AlienFrame :: af_splash.sh
-#  adaptive startup splash — centered, themed, self-contained
+#  AlienFrame :: af_splash.sh (v1.2.1 - Fixes)
 # ─────────────────────────────────────────────────────────────────────────────
 #@AF:module=splash
 #@AF:name=af_splash.sh
 #@AF:desc=Animated intro splash for AlienFrame (adaptive)
-#@AF:version=1.2.0
+#@AF:version=1.2.1
 #@AF:type=core
-#@AF:uuid=af_core_splash_003
+#@AF:uuid=af_core_splash_004
 
 # --- deps -------------------------------------------------------------------
 source "$(af_path_resolve module core)" 2>/dev/null || true
@@ -52,8 +51,9 @@ _af_splash_logo() {
   if (( total + 6 > rows )); then _af_splash_logo_mini; total=${#LINES[@]}; fi
 
   local top=$((rows/2 - total/2)); ((top<1)) && top=1
-  local _,_,_,_,_,_,fg,_bg,_border,accent,_text
-  read _ _ _ _ _ _ fg _bg _border accent _text <<<"$(af_layout_color full 2>/dev/null)"
+  # FIX: Removed invalid 'local _,_,_' syntax
+  local dump fg _bg _border accent _text
+  read dump dump dump dump dump dump fg _bg _border accent _text <<<"$(af_layout_color full 2>/dev/null)"
 
   af_core_color_fg "${accent:-118}"; af_core_bold
   local line left
