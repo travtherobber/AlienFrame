@@ -1,12 +1,5 @@
-mkdir -p themes
-cat > themes/cyber.theme <<'EOF'
-# Cyberpunk High-Contrast Theme
 FG=123
 BG=232
-# Border: Dark Cyan (inactive)
 BORDER=24
-# Accent: Neon Green (selection)
 ACCENT=46
-# Text: Cyan
 TEXT=51
-EOF

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+get_ps() { ps -eo pid,user,%cpu,%mem,comm --sort=-%cpu | head -n 50; }
+my_sel() {
+  local pid=$(echo "$2" | awk '{print $1}')
+  [[ "$pid" == "PID" ]] && return
+  export SEL_PID="$pid"
+  if ps -p "$pid" >/dev/null; then
+     local cmd=$(ps -p "$pid" -o args=)
+     af_api_update "details" "PID: $pid\nCMD:\n${cmd:0:40}...\n\n[K] Kill"
+  else
+     af_api_update "details" "Process not found"
+  fi
+}
+my_key() {
+  [[ "$2" == "k" ]] && kill "$SEL_PID" 2>/dev/null && af_api_update "proc_list" "$(get_ps)"
+}
+main() {
+  af_api_init "${1:-cyber}"; eval $(af_api_geometry); local w=$((COLS*60/100))
+  af_api_panel "proc_list" "custom:1,1,${w},${ROWS}" "TASKS" "$(get_ps)" "text" "list"
+  af_api_panel "details" "custom:$((w+1)),1,$((COLS-w)),${ROWS}" "INFO" "Select task" "text" "text"
+  af_api_on_select "my_sel"; af_api_on_key "my_key"; af_api_run 1
+}
+main "$@"

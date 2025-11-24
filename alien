@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+ROOT="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN="$ROOT/bin"
+APP="$1"; shift
+if [[ -f "$BIN/$APP" ]]; then
+  # Source logic-only file inside loader environment
+  source "$ROOT/alienframe.sh"
+  source "$BIN/$APP"
+else
+  echo "Usage: ./alien <hunter|taskmgr> [theme]"
+fi

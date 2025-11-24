@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+RAW_DATA="$(ps -e -o pid,comm | head -n 200)"
+do_search() {
+  local query="$1"; local new_data
+  af_api_update "status" "SEARCHING: $query"
+  if [[ -z "$query" ]]; then new_data="$(echo "$RAW_DATA" | head -n 50)"; else new_data="$(echo "$RAW_DATA" | grep -i "$query" | head -n 50)"; fi
+  if [[ -z "$new_data" ]]; then new_data="NO MATCHES"; fi
+  af_api_update "results" "$new_data"
+}
+on_type() { if [[ "$1" == "search" ]]; then do_search "$2"; fi; }
+on_select() { 
+  local pid=$(echo "$2" | awk '{print $1}')
+  af_api_update "status" "TARGET LOCKED: PID $pid" 
+}
+main() {
+  af_api_init "${1:-cyber}"; eval $(af_api_geometry); local list_h=$((ROWS - 8))
+  af_api_panel "search"  "custom:1,1,${COLS},3"        "SEARCH" "" "text" "input"
+  af_api_panel "results" "custom:1,4,${COLS},${list_h}" "LIST"   "$(echo "$RAW_DATA" | head -n 50)" "text" "list"
+  af_api_panel "status"  "custom:1,$((ROWS-3)),${COLS},3" "INFO"   "READY" "text" "text"
+  af_api_on_change "on_type"; af_api_on_select "on_select"
+  af_api_focus "search"; af_api_run 1
+}
+main "$@"
